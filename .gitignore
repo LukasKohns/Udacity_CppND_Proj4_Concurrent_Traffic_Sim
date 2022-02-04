@@ -8,3 +8,6 @@ temp/
 
 # ignore .vscode folder
 .vscode
+
+# ignore everything in build/
+build/
