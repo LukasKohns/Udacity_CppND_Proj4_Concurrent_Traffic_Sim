@@ -32,7 +32,8 @@ void MessageQueue<T>::send(T &&msg)
 
     // This is mostly taken from the Lesson 4 Excercise
     std::lock_guard<std::mutex> guardLock(_messageMutex);
-    _queue.push_back(std::move(msg));
+    _queue.clear();
+    _queue.emplace_back(msg);
     _condition.notify_one();
 }
 
@@ -55,8 +56,6 @@ void TrafficLight::waitForGreen()
         if (currPhase == TrafficLightPhase::green){
             return;
         }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 
@@ -84,10 +83,10 @@ void TrafficLight::cycleThroughPhases()
 
     // Random cycle time generation https://stackoverflow.com/questions/1340729/how-do-you-generate-a-random-double-uniformly-distributed-between-0-and-1-from-c
     // I used a faster engine because the randomness of this number seems less important to me (not at all to be honest)
-    std::random_device rd;
-    std::minstd_rand engine(rd());
-    std::uniform_int_distribution<> uniformTimes(4000, 6000);
-    long cycleDuration = uniformTimes(engine);
+    static std::random_device rd;
+    static std::minstd_rand engine(rd());
+    static std::uniform_real_distribution<> uniformTimes(4000, 6000);
+    double cycleDuration = uniformTimes(engine);
 
     // Time for comparison (Idea taken from Vehicle.cpp)
     std::chrono::time_point<std::chrono::system_clock> currentCycleStart;
@@ -95,7 +94,7 @@ void TrafficLight::cycleThroughPhases()
     
     while (true) {
         // check if cycle should be over
-        long timeGoneBy = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - currentCycleStart).count();
+        double timeGoneBy = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - currentCycleStart).count();
         if (timeGoneBy >= cycleDuration) {
             // switch TrafficLight
             if (_currentPhase == TrafficLightPhase::red){
